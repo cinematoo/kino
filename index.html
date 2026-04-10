@@ -138,10 +138,19 @@
         }
 
         // Initialize Keys
-        window.onload = () => {
-            updateStatus();
-            document.getElementById('omdb-key').value = localStorage.getItem('omdb_key') || '';
-            document.getElementById('gemini-key').value = localStorage.getItem('gemini_key') || '';
+        // 1. Впишите ваши ключи сюда
+const MY_OMDB_KEY = "397f5fe3"; 
+const MY_GEMINI_KEY = "AIzaSyBh3ZPHhGE_5qXwQUj7ttrfzEIpKwEFmT4";
+
+// 2. Обновите функцию загрузки страницы
+window.onload = () => {
+    // Если в localStorage пусто, используем наши вшитые ключи
+    if (!localStorage.getItem('omdb_key')) localStorage.setItem('omdb_key', MY_OMDB_KEY);
+    if (!localStorage.getItem('gemini_key')) localStorage.setItem('gemini_key', MY_GEMINI_KEY);
+    
+    document.getElementById('omdb-key').value = localStorage.getItem('omdb_key');
+    document.getElementById('gemini-key').value = localStorage.getItem('gemini_key');
+    updateStatus();
         };
 
         function toggleModal() {
