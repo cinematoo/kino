@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .movie-card:hover .movie-overlay { opacity: 1; }
         .loader {
             border: 4px solid #1e293b;
             border-top: 4px solid #3b82f6;
@@ -30,9 +31,11 @@
             <div class="flex items-center gap-4">
                 <div id="status-indicator" class="flex items-center gap-2 text-sm font-medium">
                     <span id="status-dot" class="w-3 h-3 rounded-full bg-red-500"></span>
-                    <span id="status-text" class="hidden sm:inline">Завантаження...</span>
+                    <span id="status-text" class="hidden sm:inline">Ключі не налаштовані</span>
                 </div>
-                <button onclick="toggleModal()" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-xl">⚙️</button>
+                <button onclick="toggleModal()" class="p-2 hover:bg-slate-800 rounded-full transition-colors text-xl">
+                    ⚙️
+                </button>
             </div>
         </div>
     </header>
@@ -64,7 +67,7 @@
 
             <div class="mb-8">
                 <label class="block text-sm font-medium mb-2 text-slate-400">Ваші побажання *</label>
-                <textarea id="wishes-input" placeholder="Наприклад: атмосферне кіно про хакерів..." 
+                <textarea id="wishes-input" placeholder="Наприклад: атмосферне кіно про хакерів або неонуарний детектив з несподіваним фіналом..." 
                     class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 h-32 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"></textarea>
             </div>
 
@@ -75,64 +78,80 @@
 
         <div id="loading-area" class="hidden flex flex-col items-center justify-center mt-20">
             <div class="loader mb-4"></div>
-            <p class="text-slate-400 animate-pulse">ШІ підбирає найкращі варіанти...</p>
+            <p class="text-slate-400 animate-pulse">Gemini аналізує ваші вподобання...</p>
         </div>
 
-        <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16"></div>
+        <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+            </div>
     </main>
 
     <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-3xl p-8 shadow-2xl">
             <h2 class="text-2xl font-bold mb-6">Налаштування API</h2>
+            
             <div class="space-y-6">
                 <div>
-                    <label class="text-sm text-slate-400">OMDb API Key</label>
-                    <input type="password" id="omdb-key" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 outline-none">
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm text-slate-400">OMDb API Key</label>
+                        <a href="http://www.omdbapi.com/apikey.aspx" target="_blank" class="text-xs text-blue-400 hover:underline">Отримати ключ</a>
+                    </div>
+                    <input type="password" id="omdb-key" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 outline-none focus:border-blue-500">
                 </div>
+
                 <div>
-                    <label class="text-sm text-slate-400">Gemini API Key</label>
-                    <input type="password" id="gemini-key" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 outline-none">
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm text-slate-400">Gemini API Key</label>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-blue-400 hover:underline">Отримати ключ</a>
+                    </div>
+                    <input type="password" id="gemini-key" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 outline-none focus:border-blue-500">
                 </div>
             </div>
+
             <div class="flex gap-3 mt-8">
-                <button onclick="saveKeys()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold">Зберегти</button>
-                <button onclick="toggleModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-semibold">Закрити</button>
+                <button onclick="saveKeys()" class="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">Зберегти</button>
+                <button onclick="toggleModal()" class="flex-1 bg-slate-700 hover:bg-slate-600 py-3 rounded-xl font-semibold transition-colors">Скасувати</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ВАШІ КЛЮЧІ ТЕПЕР ТУТ
-        const HARDCODED_OMDB = "397f5fe3";
-        const HARDCODED_GEMINI = "AIzaSyBh3ZPHhGE_5qXwQUj7ttrfzEIpKwEFmT4";
-
         const yearSelect = document.getElementById('year-select');
         const modal = document.getElementById('settings-modal');
         const resultsGrid = document.getElementById('results-grid');
         const loader = document.getElementById('loading-area');
 
+        // ВСТАВЛЕНІ КЛЮЧІ
+        const MY_OMDB = "397f5fe3";
+        const MY_GEMINI = "AIzaSyBh3ZPHhGE_5qXwQUj7ttrfzEIpKwEFmT4";
+
         // Populate years
         for (let year = 2026; year >= 1960; year--) {
             const opt = document.createElement('option');
-            opt.value = year; opt.textContent = year;
+            opt.value = year;
+            opt.textContent = year;
             yearSelect.appendChild(opt);
         }
 
+        // Initialize Keys
         window.onload = () => {
-            // Примусово оновлюємо ключі в пам'яті при кожному завантаженні
-            localStorage.setItem('omdb_key', HARDCODED_OMDB);
-            localStorage.setItem('gemini_key', HARDCODED_GEMINI);
-            
-            document.getElementById('omdb-key').value = HARDCODED_OMDB;
-            document.getElementById('gemini-key').value = HARDCODED_GEMINI;
+            // Примусово вставляємо ваші ключі в пам'ять
+            localStorage.setItem('omdb_key', MY_OMDB);
+            localStorage.setItem('gemini_key', MY_GEMINI);
+
+            document.getElementById('omdb-key').value = localStorage.getItem('omdb_key') || '';
+            document.getElementById('gemini-key').value = localStorage.getItem('gemini_key') || '';
             updateStatus();
         };
 
-        function toggleModal() { modal.classList.toggle('hidden'); }
+        function toggleModal() {
+            modal.classList.toggle('hidden');
+        }
 
         function saveKeys() {
-            localStorage.setItem('omdb_key', document.getElementById('omdb-key').value.trim());
-            localStorage.setItem('gemini_key', document.getElementById('gemini-key').value.trim());
+            const omdb = document.getElementById('omdb-key').value.trim();
+            const gemini = document.getElementById('gemini-key').value.trim();
+            localStorage.setItem('omdb_key', omdb);
+            localStorage.setItem('gemini_key', gemini);
             updateStatus();
             toggleModal();
         }
@@ -142,12 +161,13 @@
             const gemini = localStorage.getItem('gemini_key');
             const dot = document.getElementById('status-dot');
             const text = document.getElementById('status-text');
+
             if (omdb && gemini) {
                 dot.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]";
                 text.textContent = "Ключі підключено";
             } else {
-                dot.className = "w-3 h-3 rounded-full bg-red-500";
-                text.textContent = "Помилка ключів";
+                dot.className = "w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]";
+                text.textContent = "Ключі не введені";
             }
         }
 
@@ -158,60 +178,107 @@
             const year = document.getElementById('year-select').value;
             const genre = document.getElementById('genre-select').value;
 
-            if (!wishes) return alert("Напишіть ваші побажання!");
+            if (!omdbKey || !geminiKey) {
+                alert("Будь ласка, введіть API ключі в налаштуваннях (⚙️)");
+                toggleModal();
+                return;
+            }
 
+            if (!wishes) {
+                alert("Будь ласка, напишіть ваші побажання");
+                return;
+            }
+
+            // UI Reset
             resultsGrid.innerHTML = '';
             loader.classList.remove('hidden');
+            window.scrollTo({ top: loader.offsetTop - 100, behavior: 'smooth' });
 
             try {
-                const prompt = `Підбери 16 фільмів. Рік: ${year || 'Будь-який'}, Жанр: ${genre || 'Будь-який'}, Побажання: ${wishes}. Поверни СУТО JSON масив об'єктів. Кожен об'єкт: {"title": "English Title", "plot": "Детальний опис УКРАЇНСЬКОЮ (мінімум 30 слів)"}.`;
-                
-                // ВИПРАВЛЕНО МОДЕЛЬ НА 1.5-flash
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+                // Gemini API Request
+                const prompt = `Підбери 16 фільмів, які ідеально відповідають цим критеріям користувача (врахуй рік і жанр, якщо вказані). 
+                Критерії: Рік: ${year || 'Будь-який'}, Жанр: ${genre || 'Будь-який'}, Побажання: ${wishes}.
+                Поверни СУТО JSON масив об'єктів. Кожен об'єкт має містити два ключі: 'title' (точна офіційна англійська назва для пошуку в базі) та 'plot' (цікавий і детальний опис фільму УКРАЇНСЬКОЮ мовою). 
+                Приклад: [{"title": "The Matrix", "plot": "Культовий фільм про хакера Нео..."}].`;
+
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
                 
                 const gResponse = await fetch(geminiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
                 });
 
                 const gData = await gResponse.json();
                 let rawText = gData.candidates[0].content.parts[0].text;
+                
+                // Clean JSON string
                 const cleanJson = rawText.replace(/```json|```/g, '').trim();
                 const movieSuggestions = JSON.parse(cleanJson);
 
+                // Fetch OMDb data for each movie
                 const movieDataPromises = movieSuggestions.map(async (movie) => {
                     const oResponse = await fetch(`https://www.omdbapi.com/?apikey=${omdbKey}&t=${encodeURIComponent(movie.title)}`);
                     const oData = await oResponse.json();
+                    
                     if (oData.Response === "True") {
-                        return { ...oData, customPlot: movie.plot, imdbRating: parseFloat(oData.imdbRating) || 0 };
+                        return {
+                            ...oData,
+                            customPlot: movie.plot, // AI generated UA plot
+                            imdbRating: parseFloat(oData.imdbRating) || 0
+                        };
                     }
                     return null;
                 });
 
                 let results = (await Promise.all(movieDataPromises)).filter(m => m !== null);
+
+                // Sort by rating
                 results.sort((a, b) => b.imdbRating - a.imdbRating);
+
                 renderCards(results);
             } catch (error) {
                 console.error(error);
-                alert("Помилка. Можливо, ліміт запитів Gemini вичерпано. Спробуйте через 1 хвилину.");
+                alert("Сталася помилка при запиті до ШІ. Перевірте ключ Gemini.");
             } finally {
                 loader.classList.add('hidden');
             }
         }
 
         function renderCards(movies) {
+            if (movies.length === 0) {
+                resultsGrid.innerHTML = '<p class="col-span-full text-center text-slate-500">Нічого не знайдено. Спробуйте змінити запит.</p>';
+                return;
+            }
+
             resultsGrid.innerHTML = movies.map(movie => `
-                <div class="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 flex flex-col h-full shadow-lg">
+                <div class="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl flex flex-col h-full">
                     <div class="relative h-72 overflow-hidden bg-slate-900">
-                        <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/300x450'}" class="w-full h-full object-cover">
-                        <div class="absolute top-3 right-3 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-yellow-400 font-bold text-sm">⭐ ${movie.imdbRating}</div>
+                        <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/300x450?text=No+Poster'}" 
+                             alt="${movie.Title}" 
+                             class="w-full h-full object-cover">
+                        <div class="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-yellow-400 font-bold text-sm flex items-center gap-1">
+                            ⭐ ${movie.imdbRating}
+                        </div>
                     </div>
                     <div class="p-5 flex flex-col flex-grow">
-                        <h3 class="font-bold text-lg mb-1 line-clamp-1">${movie.Title}</h3>
-                        <p class="text-slate-400 text-xs mb-4">${movie.Year} • ${movie.Genre}</p>
-                        <p class="text-slate-300 text-sm line-clamp-6 mb-6 leading-relaxed flex-grow">${movie.customPlot}</p>
-                        <a href="https://www.imdb.com/title/${movie.imdbID}/" target="_blank" class="block w-full text-center bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">IMDb Profile</a>
+                        <h3 class="font-bold text-lg leading-tight mb-1 line-clamp-1">${movie.Title}</h3>
+                        <p class="text-slate-400 text-sm mb-8">${movie.Year} • ${movie.Genre.split(',')[0]}</p>
+                        <p class="text-slate-300 text-sm line-clamp-8 mb-6 leading-relaxed flex-grow">
+                            ${movie.customPlot}
+                        </p>
+                        <div class="space-y-2 mt-auto">
+                            <a href="https://www.imdb.com/title/${movie.imdbID}/" target="_blank" 
+                               class="block w-full text-center bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
+                               Детальніше на IMDb
+                            </a>
+                            <a href="https://www.themoviedb.org/search?query=${encodeURIComponent(movie.Title)}" target="_blank"
+                               class="block w-full text-center border border-slate-600 hover:bg-slate-700 text-slate-300 text-xs font-semibold py-2 rounded-lg transition-colors">
+                               Шукати опис українською
+                            </a>
+                        </div>
                     </div>
                 </div>
             `).join('');
